@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  /* The Real Plex Vibrant Colors */
+  --color-plex-blue: #1C1F26;   /* Dark base */
+  --color-plex-gradient-start: #2E2345; /* Purple/Blue vibe */
+  --color-plex-gradient-end: #000000;
+  --color-plex-accent: #E5A00D; /* Gold */
+}
+
+@layer base {
+  /* FIXED: Set to #1C1F26 so over-scrolling matches the app exactly */
+  html {
+    background-color: #1C1F26;
+  }
+
+  body {
+    /* The Gradient overlay */
+    background: radial-gradient(circle at 50% 0%, #3b2d58 0%, #1C1F26 40%, #000000 100%);
+    background-attachment: fixed;
+    color: #e5e7eb;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Scrollbar hiding utility */
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
