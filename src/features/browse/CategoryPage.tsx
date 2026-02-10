@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Star } from 'lucide-react';
 import { tmdbApi } from '../../lib/tmdb';
 import { getPosterImage } from '../../utils/tmdb-image';
 import type { Movie, TVShow } from '../../types/tmdb';
@@ -55,70 +55,83 @@ export function CategoryPage() {
     window.scrollTo(0, 0);
   }, [id]);
 
-  // Helper to determine media type
   const getMediaType = (item: Movie | TVShow) => {
-    // 1. If API explicitly provides media_type (common in trending), use it
     if ('media_type' in item && item.media_type) return item.media_type;
-    // 2. 'originals' category is always TV
     if (id === 'originals') return 'tv';
-    // 3. 'top-rated', 'action', etc are all Movies in our API setup
-    return 'movie'; 
+    return 'movie';
   };
 
   if (status === 'pending') {
     return (
-      <div className="min-h-screen bg-[#1C1F26] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[#e5a00d] animate-spin" />
-      </div>
+        <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+          <Loader2 className="w-10 h-10 text-[#e5a00d] animate-spin" />
+        </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#1C1F26] text-gray-100 pb-20">
-      <div className="px-6 md:px-12 pt-8 pb-4">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" /> Back to Browse
-        </button>
+      <div className="min-h-screen bg-[#121212] text-white pb-20">
 
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{title}</h1>
-        <p className="text-lg text-gray-400 max-w-3xl">
-          Browse our complete collection of {title.toLowerCase()}.
-        </p>
-      </div>
-
-      <div className="px-6 md:px-12 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-        {data?.pages.map((page) => (
-          page?.results.map((item: Movie | TVShow) => (
-            <div 
-              key={item.id} 
-              // FIXED: Added click navigation
-              onClick={() => navigate(`/${getMediaType(item)}/${item.id}`)}
-              className="group cursor-pointer flex flex-col gap-3"
+        {/* 1. Sticky Glass Header */}
+        <div className="sticky top-0 z-40 bg-[#121212]/80 backdrop-blur-xl border-b border-white/5 px-6 md:px-12 py-4 flex items-center justify-between transition-all duration-300">
+          <div className="flex items-center gap-4">
+            <button
+                onClick={() => navigate(-1)}
+                className="p-2 rounded-full hover:bg-white/10 transition-colors group"
             >
-              <div className="relative aspect-[2/3] overflow-hidden rounded-xl shadow-lg bg-gray-800 transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:ring-2 group-hover:ring-white/50">
-                <img
-                  src={getPosterImage(item.poster_path)}
-                  alt={(item as Movie).title || (item as TVShow).name}
-                  className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
-                  loading="lazy"
-                />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-semibold text-gray-200 truncate group-hover:text-white transition-colors">
-                  {(item as Movie).title || (item as TVShow).name}
-                </h3>
-              </div>
+              <ChevronLeft className="w-6 h-6 text-gray-400 group-hover:text-white" />
+            </button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white">{title}</h1>
+              <p className="text-xs text-gray-400 hidden md:block">StreamVault Collection</p>
             </div>
-          ))
-        ))}
-        
-        <div ref={lastElementRef} className="col-span-full h-20 flex items-center justify-center">
-          {isFetchingNextPage && <Loader2 className="w-8 h-8 text-[#e5a00d] animate-spin" />}
+          </div>
+        </div>
+
+        {/* 2. Premium Grid Layout */}
+        <div className="px-6 md:px-12 pt-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 gap-y-8">
+          {data?.pages.map((page) => (
+              page?.results.map((item: Movie | TVShow) => (
+                  <div
+                      key={item.id}
+                      onClick={() => navigate(`/${getMediaType(item)}/${item.id}`)}
+                      className="group cursor-pointer flex flex-col gap-3 relative"
+                  >
+                    {/* Card Image Container */}
+                    <div className="aspect-[2/3] rounded-xl overflow-hidden bg-gray-800 relative shadow-lg ring-1 ring-white/5 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-2xl group-hover:ring-2 group-hover:ring-[#e5a00d] z-10">
+                      <img
+                          src={getPosterImage(item.poster_path)}
+                          alt={(item as Movie).title || (item as TVShow).name}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
+                      />
+
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                        <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                          <p className="text-[#e5a00d] font-bold text-lg flex items-center gap-1.5">
+                            <Star className="w-4 h-4 fill-current" /> {item.vote_average?.toFixed(1)}
+                          </p>
+                          <p className="text-xs text-gray-300 font-medium mt-1">
+                            {((item as Movie).release_date || (item as TVShow).first_air_date)?.split('-')[0] || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Title Below */}
+                    <h3 className="text-sm font-medium text-gray-300 truncate group-hover:text-white transition-colors px-1">
+                      {(item as Movie).title || (item as TVShow).name}
+                    </h3>
+                  </div>
+              ))
+          ))}
+
+          {/* Loading Spinner */}
+          <div ref={lastElementRef} className="col-span-full h-24 flex items-center justify-center">
+            {isFetchingNextPage && <Loader2 className="w-8 h-8 text-[#e5a00d] animate-spin" />}
+          </div>
         </div>
       </div>
-    </div>
   );
 }

@@ -5,7 +5,7 @@ export interface Movie {
   overview: string;
   backdrop_path: string | null;
   poster_path: string | null;
-  media_type: 'movie';
+  media_type?: 'movie'; // Made optional as sometimes it's implied
   adult: boolean;
   original_language: string;
   genre_ids: number[];
@@ -15,7 +15,7 @@ export interface Movie {
   vote_count: number;
   // Detail fields
   runtime?: number;
-  status?: string; // e.g., "Released"
+  status?: string;
   genres?: { id: number; name: string }[];
   credits?: Credits;
   similar?: PaginatedResponse<Movie>;
@@ -29,7 +29,7 @@ export interface TVShow {
   overview: string;
   backdrop_path: string | null;
   poster_path: string | null;
-  media_type: 'tv';
+  media_type?: 'tv'; // Made optional
   first_air_date: string;
   vote_average: number;
   vote_count: number;
@@ -37,8 +37,8 @@ export interface TVShow {
   popularity: number;
   // Detail fields
   episode_run_time?: number[];
-  number_of_seasons?: number; // Added this
-  status?: string;            // Added this (e.g., "Ended", "Returning Series")
+  number_of_seasons?: number;
+  status?: string;
   genres?: { id: number; name: string }[];
   credits?: Credits;
   similar?: PaginatedResponse<TVShow>;
@@ -55,6 +55,7 @@ export interface CastMember {
   name: string;
   character: string;
   profile_path: string | null;
+  popularity: number; // Added for sorting
 }
 
 export interface CrewMember {
@@ -86,6 +87,7 @@ export interface Person {
   place_of_birth: string | null;
   profile_path: string | null;
   known_for_department: string;
+  homepage: string | null;
   combined_credits: {
     cast: (Movie | TVShow)[];
   };

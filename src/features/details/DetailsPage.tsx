@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Play, Check, Bookmark, Share2, ChevronLeft, Star, Loader2, X } from 'lucide-react';
+import { Play, Check, Plus, Share2, ChevronLeft, Star, Loader2, X, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { tmdbApi } from '../../lib/tmdb';
 import { getOriginalImage, getPosterImage } from '../../utils/tmdb-image';
 import { ContentRow } from '../browse/components/ContentRow';
@@ -12,6 +12,8 @@ export function DetailsPage() {
   const { type, id } = useParams<{ type: 'movie' | 'tv'; id: string }>();
   const navigate = useNavigate();
   const [showTrailer, setShowTrailer] = useState(false);
+  const [showNoTrailerModal, setShowNoTrailerModal] = useState(false);
+  const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
 
   // Watchlist Hook
   const { addItem, removeItem, isInWatchlist } = useWatchlist();
@@ -24,7 +26,7 @@ export function DetailsPage() {
     enabled: !!id && !!type,
   });
 
-  // 2. Fetch Watch Providers (NEW)
+  // 2. Fetch Watch Providers
   const { data: providers } = useQuery({
     queryKey: ['providers', type, id],
     queryFn: () => tmdbApi.getWatchProviders(type as 'movie' | 'tv', Number(id)),
@@ -37,9 +39,9 @@ export function DetailsPage() {
 
   if (isLoading || !content) {
     return (
-      <div className="min-h-screen bg-[#1C1F26] flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-[#e5a00d] animate-spin" />
-      </div>
+        <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+          <Loader2 className="w-12 h-12 text-[#e5a00d] animate-spin" />
+        </div>
     );
   }
 
@@ -51,14 +53,11 @@ export function DetailsPage() {
   const seasons = !isMovie ? (content as TVShow).number_of_seasons : null;
   const status = content.status;
 
-  // Get US Providers (Change 'US' to your country code if needed, e.g., 'GB' for UK)
-  // We prioritize 'flatrate' (streaming), then 'rent', then 'buy'
-  const countryProviders = providers?.US || providers?.GB || null; 
+  const countryProviders = providers?.US || providers?.GB || null;
   const streamingServices = countryProviders?.flatrate || [];
 
-  // Find Trailer
   const trailer = content.videos?.results.find(
-    (vid: Video) => vid.type === "Trailer" && vid.site === "YouTube"
+      (vid: Video) => vid.type === "Trailer" && vid.site === "YouTube"
   );
 
   const handleWatchlistToggle = () => {
@@ -70,135 +69,212 @@ export function DetailsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1C1F26] text-white font-sans pb-20">
-      
-      {/* 0. BACK BUTTON OVERLAY */}
-      <button 
-        onClick={() => navigate(-1)}
-        className="fixed top-6 left-6 z-50 p-2 bg-black/50 hover:bg-black/80 rounded-full backdrop-blur-md transition-all group"
-      >
-        <ChevronLeft className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
-      </button>
+      <div className="min-h-screen bg-[#121212] text-white font-sans pb-24 md:pb-20 relative">
 
-      {/* 1. BACKDROP HEADER */}
-      <div className="relative h-[70vh] w-full overflow-hidden">
-        <div className="absolute inset-0">
-           <img 
-             src={getOriginalImage(content.backdrop_path)} 
-             alt="" 
-             className="w-full h-full object-cover opacity-50 blur-sm scale-105"
-           />
-           <div className="absolute inset-0 bg-gradient-to-t from-[#1C1F26] via-[#1C1F26]/60 to-transparent" />
-           <div className="absolute inset-0 bg-gradient-to-r from-[#1C1F26] via-[#1C1F26]/40 to-transparent" />
+        {/* 0. MOBILE NAVBAR / BACK BUTTON */}
+        <div className="fixed top-0 left-0 w-full z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+          <button
+              onClick={() => navigate(-1)}
+              className="pointer-events-auto p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full transition-all active:scale-95"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
         </div>
 
-        <div className="relative z-10 container mx-auto px-6 md:px-12 h-full flex flex-col md:flex-row items-center md:items-end pb-12 gap-8">
-          
-          <div className="hidden md:block w-64 aspect-[2/3] rounded-lg shadow-2xl overflow-hidden ring-1 ring-white/10 flex-shrink-0">
-            <img src={getPosterImage(content.poster_path)} alt={title} className="w-full h-full object-cover" />
+        {/* 1. HERO SECTION */}
+        <div className="relative w-full">
+          {/* Backdrop Image */}
+          <div className="relative h-[55vh] md:h-[75vh] w-full overflow-hidden">
+            <img
+                src={getOriginalImage(content.backdrop_path)}
+                alt=""
+                className="w-full h-full object-cover opacity-80 md:opacity-60"
+            />
+            {/* Gradient Overlays */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/40 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#121212]/80 via-transparent to-transparent hidden md:block" />
           </div>
 
-          <div className="flex-1 space-y-6 text-center md:text-left">
-            <h1 className="text-4xl md:text-6xl font-bold drop-shadow-xl leading-tight">{title}</h1>
+          {/* Content Container - Overlaps the backdrop on mobile using negative margin */}
+          <div className="relative z-10 container mx-auto px-4 md:px-12 -mt-32 md:-mt-64 flex flex-col md:flex-row gap-6 md:gap-10">
 
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm md:text-base text-gray-300 font-medium">
-              {status && <span className="px-2 py-0.5 rounded text-xs uppercase font-bold border border-gray-500 text-gray-400">{status}</span>}
-              <span>{year}</span>
-              {isMovie && runtime && <span>{Math.floor(runtime / 60)}h {runtime % 60}m</span>}
-              {!isMovie && seasons && <span>{seasons} {seasons === 1 ? 'Season' : 'Seasons'}</span>}
-              <span className="flex items-center gap-1 text-[#e5a00d]"><Star className="w-4 h-4 fill-current" /> {content.vote_average.toFixed(1)}</span>
-            </div>
-
-            <div className="flex items-center justify-center md:justify-start gap-4 pt-2">
-              <button 
-                onClick={() => trailer ? setShowTrailer(true) : alert('No trailer available')}
-                className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-200 transition active:scale-95"
-              >
-                <Play className="w-5 h-5 fill-current" /> {trailer ? 'Watch Trailer' : 'No Trailer'}
-              </button>
-              
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleWatchlistToggle}
-                  className={`p-3 rounded-full border transition ${isSaved ? 'bg-[#e5a00d] border-[#e5a00d] text-black' : 'border-gray-500 hover:border-white hover:bg-white/10'}`} 
-                  title={isSaved ? "Remove from Watchlist" : "Add to Watchlist"}
-                >
-                  {isSaved ? <Check className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
-                </button>
-                <button className="p-3 rounded-full border border-gray-500 hover:border-white hover:bg-white/10 transition"><Share2 className="w-5 h-5" /></button>
+            {/* POSTER (Visible on Mobile now) */}
+            <div className="flex-shrink-0 mx-auto md:mx-0 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+              <div className="w-40 md:w-72 aspect-[2/3] rounded-lg overflow-hidden border-2 border-white/10 bg-gray-800">
+                <img
+                    src={getPosterImage(content.poster_path)}
+                    alt={title}
+                    className="w-full h-full object-cover"
+                />
               </div>
             </div>
-            
-            {/* NEW: WHERE TO WATCH SECTION */}
-            {streamingServices.length > 0 && (
-              <div className="flex flex-col items-center md:items-start gap-2 animate-fade-in">
-                <span className="text-xs text-gray-400 font-bold uppercase tracking-widest">Streaming On</span>
-                <div className="flex gap-3">
-                  {streamingServices.map((provider: any) => (
-                    <div key={provider.provider_id} className="w-10 h-10 rounded-lg overflow-hidden shadow-lg ring-1 ring-white/10" title={provider.provider_name}>
-                      <img 
-                        src={`https://image.tmdb.org/t/p/original${provider.logo_path}`} 
-                        alt={provider.provider_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
+
+            {/* TEXT INFO */}
+            <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left pt-2 md:pt-24">
+
+              {/* Title */}
+              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight mb-3">
+                {title}
+              </h1>
+
+              {/* Metadata Row */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-4 text-xs md:text-sm text-gray-300 font-medium mb-6">
+                {status && status !== "Released" && (
+                    <span className="px-2 py-0.5 rounded-md bg-gray-800 border border-gray-600 uppercase text-[10px] tracking-wider">{status}</span>
+                )}
+                {year && <span className="text-white">{year}</span>}
+                <span className="w-1 h-1 rounded-full bg-gray-500"></span>
+                {isMovie && runtime ? (
+                    <span>{Math.floor(runtime / 60)}h {runtime % 60}m</span>
+                ) : seasons ? (
+                    <span>{seasons} {seasons === 1 ? 'Season' : 'Seasons'}</span>
+                ) : null}
+                <span className="w-1 h-1 rounded-full bg-gray-500"></span>
+                <div className="flex items-center gap-1 text-[#e5a00d]">
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  <span>{content.vote_average.toFixed(1)}</span>
                 </div>
               </div>
-            )}
 
-             <p className="text-gray-300 text-lg leading-relaxed max-w-3xl line-clamp-3 md:line-clamp-none">{content.overview}</p>
+              {/* ACTION BUTTONS */}
+              <div className="w-full max-w-md md:max-w-none flex flex-col md:flex-row gap-3 mb-8">
+                <button
+                    onClick={() => trailer ? setShowTrailer(true) : setShowNoTrailerModal(true)} // FIXED: Trigger custom modal
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#e5a00d] text-black px-8 py-3.5 rounded-xl font-bold hover:bg-[#c4890b] transition active:scale-95 shadow-lg shadow-orange-500/20"
+                >
+                  <Play className="w-5 h-5 fill-black" /> {trailer ? 'Watch Trailer' : 'No Trailer'}
+                </button>
+
+                <div className="flex gap-3 justify-center">
+                  <button
+                      onClick={handleWatchlistToggle}
+                      className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold border transition active:scale-95 ${
+                          isSaved
+                              ? 'bg-white text-black border-white'
+                              : 'bg-white/5 border-white/20 hover:bg-white/10 text-white'
+                      }`}
+                  >
+                    {isSaved ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                    <span className="md:hidden">{isSaved ? 'Added' : 'My List'}</span>
+                    <span className="hidden md:inline">{isSaved ? 'In Watchlist' : 'Add to Watchlist'}</span>
+                  </button>
+
+                  <button className="p-3.5 rounded-xl bg-white/5 border border-white/20 hover:bg-white/10 active:scale-95 transition">
+                    <Share2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* OVERVIEW */}
+              <div className="w-full max-w-3xl mb-8">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2 hidden md:block">Overview</h3>
+                <p className={`text-gray-300 text-sm md:text-lg leading-relaxed ${!isOverviewExpanded ? 'line-clamp-3 md:line-clamp-none' : ''}`}>
+                  {content.overview}
+                </p>
+                <button
+                    onClick={() => setIsOverviewExpanded(!isOverviewExpanded)}
+                    className="md:hidden mt-2 text-[#e5a00d] text-sm font-medium flex items-center gap-1"
+                >
+                  {isOverviewExpanded ? <>Show Less <ChevronUp className="w-4 h-4"/></> : <>Read More <ChevronDown className="w-4 h-4"/></>}
+                </button>
+              </div>
+
+              {/* STREAMING PROVIDERS */}
+              {streamingServices.length > 0 && (
+                  <div className="flex flex-col items-center md:items-start gap-3 mb-8 w-full">
+                    <span className="text-xs text-gray-500 font-bold uppercase tracking-widest">Available On</span>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-4">
+                      {streamingServices.map((provider: any) => (
+                          <div key={provider.provider_id} className="group relative w-12 h-12 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10 cursor-pointer hover:scale-110 transition-transform">
+                            <img
+                                src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                alt={provider.provider_name}
+                                className="w-full h-full object-cover"
+                            />
+                          </div>
+                      ))}
+                    </div>
+                  </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* 2. CAST SECTION */}
-      <div className="container mx-auto px-6 md:px-12 py-10">
-        <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">Cast of {title}</h3>
-        <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide snap-x">
-          {content.credits?.cast.slice(0, 15).map((person: CastMember) => (
-            <div key={person.id} onClick={() => navigate(`/person/${person.id}`)} className="flex-none w-32 flex flex-col items-center gap-2 snap-start cursor-pointer group">
-              <div className="w-24 h-24 rounded-full overflow-hidden ring-2 ring-white/10 bg-gray-800 group-hover:ring-[#e5a00d] transition-all">
-                {person.profile_path ? <img src={getPosterImage(person.profile_path)} alt={person.name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">No Image</div>}
-              </div>
-              <div className="text-center group-hover:text-white transition-colors">
-                <p className="font-semibold text-sm truncate w-full text-gray-200 group-hover:text-[#e5a00d]">{person.name}</p>
-                <p className="text-xs text-gray-400 truncate w-full">{person.character}</p>
+        {/* 2. CAST CARDS (Horizontal Scroll) */}
+        <div className="container mx-auto px-4 md:px-12 py-8 border-t border-white/5 mt-8">
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">Top Cast</h3>
+          <div className="flex overflow-x-auto gap-4 pb-8 scrollbar-hide snap-x md:grid md:grid-cols-6 lg:grid-cols-8 md:overflow-visible">
+            {content.credits?.cast.slice(0, 12).map((person: CastMember) => (
+                <div key={person.id} onClick={() => navigate(`/person/${person.id}`)} className="flex-none w-28 md:w-auto snap-start cursor-pointer group">
+                  <div className="w-full aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-3 relative">
+                    {person.profile_path ? (
+                        <img src={getPosterImage(person.profile_path)} alt={person.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs font-medium">No Image</div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  </div>
+                  <h4 className="font-semibold text-sm truncate text-white group-hover:text-[#e5a00d] transition-colors">{person.name}</h4>
+                  <p className="text-xs text-gray-400 truncate">{person.character}</p>
+                </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 3. SIMILAR CONTENT */}
+        {content.similar && content.similar.results.length > 0 && (
+            <div className="mt-4 px-4 md:px-0">
+              <ContentRow title="More Like This" data={content.similar.results} categoryPath="similar" />
+            </div>
+        )}
+
+        {/* 4. TRAILER MODAL */}
+        {showTrailer && trailer && (
+            <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+                <button
+                    onClick={() => setShowTrailer(false)}
+                    className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-[#e5a00d] hover:text-black text-white rounded-full transition-all z-10"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
+                    title="YouTube video player"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                ></iframe>
               </div>
             </div>
-          ))}
-        </div>
+        )}
+
+        {/* 5. NO TRAILER MODAL (NEW) */}
+        {showNoTrailerModal && (
+            <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="bg-[#1a1a1a] p-6 rounded-2xl max-w-sm w-full border border-white/10 shadow-2xl transform scale-100 animate-in zoom-in-95 duration-200">
+                <div className="flex flex-col items-center text-center gap-4">
+                  <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-[#e5a00d]" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-white">No Trailer Available</h3>
+                    <p className="text-gray-400 text-sm">
+                      Sorry, we couldn't find a trailer for <span className="text-white font-medium">"{title}"</span> at this time.
+                    </p>
+                  </div>
+                  <button
+                      onClick={() => setShowNoTrailerModal(false)}
+                      className="w-full bg-[#e5a00d] text-black font-bold py-3 rounded-xl hover:bg-[#c4890b] transition active:scale-95 mt-2"
+                  >
+                    Got it
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
       </div>
-
-      {/* 3. SIMILAR TITLES */}
-      {content.similar && content.similar.results.length > 0 && (
-         <div className="mt-4">
-             <ContentRow title="Titles You Might Like" data={content.similar.results} categoryPath="similar" />
-         </div>
-      )}
-
-      {/* 4. TRAILER MODAL */}
-      {showTrailer && trailer && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-5xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-            <button 
-              onClick={() => setShowTrailer(false)}
-              className="absolute top-4 right-4 text-white hover:text-[#e5a00d] z-10"
-            >
-              <X className="w-8 h-8" />
-            </button>
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
