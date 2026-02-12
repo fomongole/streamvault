@@ -29,7 +29,6 @@ export function ActorPage() {
     );
   }
 
-  // Calculate age
   const age = person.birthday
       ? new Date().getFullYear() - new Date(person.birthday).getFullYear()
       : null;

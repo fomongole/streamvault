@@ -15,7 +15,6 @@ export function DetailsPage() {
   const [showNoTrailerModal, setShowNoTrailerModal] = useState(false);
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
 
-  // Watchlist Hook
   const { addItem, removeItem, isInWatchlist } = useWatchlist();
   const isSaved = id ? isInWatchlist(Number(id)) : false;
 
@@ -71,7 +70,7 @@ export function DetailsPage() {
   return (
       <div className="min-h-screen bg-[#121212] text-white font-sans pb-24 md:pb-20 relative">
 
-        {/* 0. MOBILE NAVBAR / BACK BUTTON */}
+        {/*  MOBILE NAVBAR / BACK BUTTON */}
         <div className="fixed top-0 left-0 w-full z-50 p-4 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
           <button
               onClick={() => navigate(-1)}
@@ -81,7 +80,7 @@ export function DetailsPage() {
           </button>
         </div>
 
-        {/* 1. HERO SECTION */}
+        {/* HERO SECTION */}
         <div className="relative w-full">
           {/* Backdrop Image */}
           <div className="relative h-[55vh] md:h-[75vh] w-full overflow-hidden">

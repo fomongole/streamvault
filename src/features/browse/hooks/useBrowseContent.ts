@@ -4,7 +4,7 @@ import { tmdbApi } from '../../../lib/tmdb';
 // This hook fetches ALL the rows needed for the homepage in parallel.
 // It returns an object containing data for every section.
 export const useBrowseContent = () => {
-  // 1. Fetch Trending (This will also be used for the Hero Banner)
+  // 1. Fetch Trending (This is also used for the Hero Banner)
   const trendingQuery = useQuery({
     queryKey: ['trending'],
     queryFn: tmdbApi.getTrending,

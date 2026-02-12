@@ -8,20 +8,19 @@ export function WatchlistPage() {
   const navigate = useNavigate();
   const { items, removeItem } = useWatchlist();
 
-  // Helper to safely get title/name
   const getTitle = (item: Movie | TVShow) => 'title' in item ? item.title : item.name;
   const getDate = (item: Movie | TVShow) => 'release_date' in item ? item.release_date : item.first_air_date;
   const getType = (item: Movie | TVShow) => 'title' in item ? 'movie' : 'tv';
 
   const handleRemove = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation(); // Prevent navigating to the detail page
+    e.stopPropagation(); // Prevents navigating to the detail page
     removeItem(id);
   };
 
   return (
       <div className="min-h-screen bg-[#121212] text-white pb-20 relative overflow-x-hidden">
 
-        {/* 1. Abstract Background Mesh (Consistent with ActorPage) */}
+        {/* Abstract Background Mesh */}
         <div className="fixed top-0 left-0 w-full h-[60vh] bg-gradient-to-b from-gray-900 to-[#121212] z-0 pointer-events-none" />
         <div className="fixed top-20 right-0 w-96 h-96 bg-[#e5a00d]/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="fixed bottom-0 left-0 w-72 h-72 bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />

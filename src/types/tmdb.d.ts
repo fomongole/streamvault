@@ -5,7 +5,7 @@ export interface Movie {
   overview: string;
   backdrop_path: string | null;
   poster_path: string | null;
-  media_type?: 'movie'; // Made optional as sometimes it's implied
+  media_type?: 'movie';
   adult: boolean;
   original_language: string;
   genre_ids: number[];
@@ -29,7 +29,7 @@ export interface TVShow {
   overview: string;
   backdrop_path: string | null;
   poster_path: string | null;
-  media_type?: 'tv'; // Made optional
+  media_type?: 'tv';
   first_air_date: string;
   vote_average: number;
   vote_count: number;
@@ -55,7 +55,7 @@ export interface CastMember {
   name: string;
   character: string;
   profile_path: string | null;
-  popularity: number; // Added for sorting
+  popularity: number;
 }
 
 export interface CrewMember {

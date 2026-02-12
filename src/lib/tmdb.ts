@@ -1,8 +1,7 @@
 import { tmdb } from './axios';
 import type { Movie, TVShow, PaginatedResponse, Person } from '../types/tmdb';
 
-// This object contains all the "endpoints" our app will use.
-// It keeps our components clean and logic-free.
+// This object contains all the "endpoints" the app uses.
 export const tmdbApi = {
   // 1. The "Hero" Section & Trending Row
   getTrending: async () => {
@@ -52,7 +51,7 @@ export const tmdbApi = {
     return data.results;
   },
   
-  // 9. Get details for a specific movie (for the Modal)
+  // 9. Get details for a specific movie
   getMovieDetails: async (movieId: number) => {
     // "append_to_response" is a magic parameter that fetches videos and credits 
     // in the SAME request. This saves us 2 extra network calls.
