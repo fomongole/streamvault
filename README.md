@@ -2,7 +2,7 @@
 
 **StreamVault** is a high-fidelity media discovery application designed to replicate the premium user experience of major streaming platforms like Plex. Built with modern web technologies, it features a seamless, responsive interface for browsing movies and TV shows, viewing detailed metadata, and managing a personal watchlist.
 
-![StreamVault Screenshot](screenshots/browser.png)
+### [🌐 View Live Demo](https://streamvault-lime.vercel.app/)
 
 ## 🚀 Features
 
